@@ -1,15 +1,16 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Roblox Downgrader API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: versions
+    description: Roblox version history
 paths:
   /healthz:
     get:
@@ -24,6 +25,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /versions:
+    get:
+      operationId: listVersions
+      tags: [versions]
+      summary: List Roblox versions
+      description: Returns paginated list of Roblox deploy history versions
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [WindowsPlayer, Studio64, Studio, MacPlayer, MacStudio]
+          description: Filter by binary type
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Search by version hash or version number
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: List of versions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionListResponse"
+        "500":
+          description: Failed to fetch version history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /versions/latest:
+    get:
+      operationId: getLatestVersions
+      tags: [versions]
+      summary: Get latest versions
+      description: Returns the latest version for each binary type
+      responses:
+        "200":
+          description: Latest versions per type
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RobloxVersion"
+        "500":
+          description: Failed to fetch version history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -33,4 +101,50 @@ components:
           type: string
       required:
         - status
-
+    RobloxVersion:
+      type: object
+      required:
+        - versionHash
+        - type
+        - deployedAt
+      properties:
+        versionHash:
+          type: string
+          description: Version hash (e.g. version-abc123def456)
+        versionNumber:
+          type: ["string", "null"]
+          description: Human-readable version number (e.g. 0.638.0.6380484)
+        type:
+          type: string
+          description: Binary type (WindowsPlayer, Studio64, etc.)
+        deployedAt:
+          type: string
+          description: ISO 8601 date string
+        fileVersion:
+          type: ["string", "null"]
+          description: File version string
+    VersionListResponse:
+      type: object
+      required:
+        - versions
+        - total
+        - page
+        - pageSize
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RobloxVersion"
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
