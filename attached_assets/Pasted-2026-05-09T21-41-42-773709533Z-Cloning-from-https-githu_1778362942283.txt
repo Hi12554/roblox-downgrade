@@ -1,0 +1,33 @@
+2026-05-09T21:41:42.773709533Z ==> Cloning from https://github.com/Hi12554/roblox-downgrade
+2026-05-09T21:41:43.293016772Z ==> Checking out commit 727a60a2a41ce6426d78badf25b7077fd1580e1e in branch main
+2026-05-09T21:41:44.814756564Z ==> Using Node.js version 24.14.1 (default)
+2026-05-09T21:41:44.838914247Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-05-09T21:41:46.759452618Z ==> Running build command 'npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build'...
+2026-05-09T21:41:47.733556487Z 
+2026-05-09T21:41:47.733579358Z added 1 package in 909ms
+2026-05-09T21:41:47.733586118Z 
+2026-05-09T21:41:47.733630819Z 1 package is looking for funding
+2026-05-09T21:41:47.73368519Z   run `npm fund` for details
+2026-05-09T21:41:48.322847835Z Scope: all 9 workspace projects
+2026-05-09T21:41:48.38021335Z Lockfile is up to date, resolution step is skipped
+2026-05-09T21:41:48.405659055Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-05-09T21:41:48.450406835Z Packages: +497
+2026-05-09T21:41:48.450434656Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-05-09T21:41:49.405807093Z Progress: resolved 497, reused 0, downloaded 123, added 113
+2026-05-09T21:41:50.406190527Z Progress: resolved 497, reused 0, downloaded 295, added 247
+2026-05-09T21:41:51.405988136Z Progress: resolved 497, reused 0, downloaded 316, added 254
+2026-05-09T21:41:52.405875248Z Progress: resolved 497, reused 0, downloaded 387, added 284
+2026-05-09T21:41:53.406092338Z Progress: resolved 497, reused 0, downloaded 485, added 314
+2026-05-09T21:41:53.828057986Z Progress: resolved 497, reused 0, downloaded 497, added 497, done
+2026-05-09T21:41:54.266296487Z 
+2026-05-09T21:41:54.266323287Z devDependencies:
+2026-05-09T21:41:54.266328508Z + prettier 3.8.1
+2026-05-09T21:41:54.266333558Z + typescript 5.9.3
+2026-05-09T21:41:54.266337588Z 
+2026-05-09T21:41:54.316364246Z . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; if [ "$CI" = "true" ] || [ -n "$RENDER" ]; then exit 0; fi; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-05-09T21:41:54.386279114Z . preinstall: Done
+2026-05-09T21:41:54.499229111Z [ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: esbuild@0.27.3
+2026-05-09T21:41:54.499248691Z 
+2026-05-09T21:41:54.499254351Z Run "pnpm approve-builds" to pick which dependencies should be allowed to run scripts.
+2026-05-09T21:41:54.80196805Z ==> Build failed 😞
+2026-05-09T21:41:54.801984571Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
