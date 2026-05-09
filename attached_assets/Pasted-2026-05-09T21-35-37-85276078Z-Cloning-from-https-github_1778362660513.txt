@@ -1,0 +1,32 @@
+2026-05-09T21:35:37.85276078Z ==> Cloning from https://github.com/Hi12554/roblox-downgrade
+2026-05-09T21:35:43.379430054Z ==> Checking out commit c1830f4b43633d8a1604cfbf48face5b39432124 in branch main
+2026-05-09T21:35:44.883705567Z ==> Using Node.js version 24.14.1 (default)
+2026-05-09T21:35:44.907472685Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-05-09T21:35:46.784199959Z ==> Running build command 'npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build'...
+2026-05-09T21:35:47.762897394Z 
+2026-05-09T21:35:47.762920104Z added 1 package in 913ms
+2026-05-09T21:35:47.762924394Z 
+2026-05-09T21:35:47.762990176Z 1 package is looking for funding
+2026-05-09T21:35:47.763074987Z   run `npm fund` for details
+2026-05-09T21:35:48.363114612Z Scope: all 9 workspace projects
+2026-05-09T21:35:48.413397223Z Lockfile is up to date, resolution step is skipped
+2026-05-09T21:35:48.439564138Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-05-09T21:35:48.505613383Z Packages: +497
+2026-05-09T21:35:48.505641403Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-05-09T21:35:49.440619094Z Progress: resolved 497, reused 0, downloaded 123, added 110
+2026-05-09T21:35:50.440326324Z Progress: resolved 497, reused 0, downloaded 297, added 245
+2026-05-09T21:35:51.440378451Z Progress: resolved 497, reused 0, downloaded 321, added 253
+2026-05-09T21:35:52.440845336Z Progress: resolved 497, reused 0, downloaded 403, added 284
+2026-05-09T21:35:53.440389953Z Progress: resolved 497, reused 0, downloaded 497, added 480
+2026-05-09T21:35:53.447785286Z Progress: resolved 497, reused 0, downloaded 497, added 497, done
+2026-05-09T21:35:53.672464974Z 
+2026-05-09T21:35:53.672485684Z devDependencies:
+2026-05-09T21:35:53.672489644Z + prettier 3.8.1
+2026-05-09T21:35:53.672493534Z + typescript 5.9.3
+2026-05-09T21:35:53.672497054Z 
+2026-05-09T21:35:53.695924207Z . preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+2026-05-09T21:35:53.729127517Z . preinstall: Use pnpm instead
+2026-05-09T21:35:53.730738419Z . preinstall: Failed
+2026-05-09T21:35:53.73907856Z [ELIFECYCLE] Command failed with exit code 1.
+2026-05-09T21:35:53.889255419Z ==> Build failed 😞
+2026-05-09T21:35:53.889275129Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
