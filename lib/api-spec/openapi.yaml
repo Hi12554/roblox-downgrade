@@ -57,6 +57,20 @@ paths:
           schema:
             type: integer
             default: 50
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Filter by month (1-12)
+        - name: year
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by year (e.g. 2024)
       responses:
         "200":
           description: List of versions

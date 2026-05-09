@@ -31,8 +31,9 @@ async function fetchDeployHistory(): Promise<RobloxVersion[]> {
   const versions: RobloxVersion[] = [];
 
   for (const line of lines) {
+    // Matches: New <type> <version-hash> at <date>[, file version: X, Y, Z, W[, git hash: ...]] ...
     const match = line.match(
-      /^New\s+(\S+)\s+(version-[a-f0-9]+)\s+at\s+(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}:\d{2}\s+[AP]M)(?:,\s+file version:\s*([\d,\s]+?))?\.{3}/i
+      /^New\s+(\S+)\s+(version-\S+)\s+at\s+(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}:\d{2}\s+[AP]M)(?:,\s+file version:\s*([\d,\s]+?))?(?:,\s*git hash:\s*\S+)?\s*\.\.\./i
     );
     if (!match) continue;
 
@@ -82,10 +83,19 @@ router.get("/versions", async (req, res) => {
     return;
   }
 
-  const { type, search, page = 1, pageSize = 50 } = parsed.data;
+  const { type, search, page = 1, pageSize = 50, month, year } = parsed.data;
 
   try {
     let versions = await fetchDeployHistory();
+
+    if (month !== undefined || year !== undefined) {
+      versions = versions.filter((v) => {
+        const d = new Date(v.deployedAt);
+        if (month !== undefined && d.getUTCMonth() + 1 !== month) return false;
+        if (year !== undefined && d.getUTCFullYear() !== year) return false;
+        return true;
+      });
+    }
 
     if (type) {
       versions = versions.filter(

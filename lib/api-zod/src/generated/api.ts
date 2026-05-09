@@ -21,6 +21,7 @@ export const HealthCheckResponse = zod.object({
  */
 export const listVersionsQueryPageDefault = 1;
 export const listVersionsQueryPageSizeDefault = 50;
+export const listVersionsQueryMonthMax = 12;
 
 export const ListVersionsQueryParams = zod.object({
   type: zod
@@ -33,6 +34,13 @@ export const ListVersionsQueryParams = zod.object({
     .describe("Search by version hash or version number"),
   page: zod.coerce.number().default(listVersionsQueryPageDefault),
   pageSize: zod.coerce.number().default(listVersionsQueryPageSizeDefault),
+  month: zod.coerce
+    .number()
+    .min(1)
+    .max(listVersionsQueryMonthMax)
+    .optional()
+    .describe("Filter by month (1-12)"),
+  year: zod.coerce.number().optional().describe("Filter by year (e.g. 2024)"),
 });
 
 export const ListVersionsResponse = zod.object({

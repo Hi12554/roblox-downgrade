@@ -18,4 +18,14 @@ export type ListVersionsParams = {
   search?: string;
   page?: number;
   pageSize?: number;
+  /**
+   * Filter by month (1-12)
+   * @minimum 1
+   * @maximum 12
+   */
+  month?: number;
+  /**
+   * Filter by year (e.g. 2024)
+   */
+  year?: number;
 };
