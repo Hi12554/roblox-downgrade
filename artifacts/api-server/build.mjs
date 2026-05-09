@@ -4,13 +4,34 @@ import { fileURLToPath } from "node:url";
 import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
 import { rm } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const frontendDir = path.resolve(artifactDir, "../roblox-downgrader");
+
+function buildFrontend() {
+  console.log("Building frontend...");
+  const result = spawnSync(
+    "pnpm",
+    ["run", "build"],
+    {
+      cwd: frontendDir,
+      stdio: "inherit",
+      env: { ...process.env, BASE_PATH: "/", NODE_ENV: "production" },
+    }
+  );
+  if (result.status !== 0) {
+    throw new Error(`Frontend build failed with exit code ${result.status}`);
+  }
+  console.log("Frontend build complete.");
+}
 
 async function buildAll() {
+  buildFrontend();
+
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
 
