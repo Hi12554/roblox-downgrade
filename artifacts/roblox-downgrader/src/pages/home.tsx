@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download, RefreshCw, Link, Terminal } from "lucide-react";
+import { Download, RefreshCw, Link2, ChevronRight } from "lucide-react";
 
 const HOST_PATH = "https://setup-aws.rbxcdn.com";
 
@@ -118,282 +118,6 @@ async function fetchBinary(url: string): Promise<ArrayBuffer> {
   return resp.arrayBuffer();
 }
 
-export default function Home() {
-  const [binaryType, setBinaryType] = useState<BinaryTypeName>("WindowsPlayer");
-  const [arch, setArch] = useState<string>("x86-64");
-  const [channel, setChannel] = useState("LIVE");
-  const [versionHash, setVersionHash] = useState("");
-  const [compressZip, setCompressZip] = useState(false);
-  const [compressionLevel, setCompressionLevel] = useState(5);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isFetchingVersion, setIsFetchingVersion] = useState(false);
-  const [logs, setLogs] = useState<string[]>([]);
-  const logRef = useRef<HTMLPreElement>(null);
-
-  const addLog = useCallback((msg: string) => {
-    setLogs(prev => [...prev, msg]);
-    setTimeout(() => {
-      logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
-    }, 0);
-  }, []);
-
-  function handleBinaryTypeChange(val: BinaryTypeName) {
-    setBinaryType(val);
-    setArch(getDefaultArch(val));
-  }
-
-  async function fetchLatestVersion() {
-    setIsFetchingVersion(true);
-    try {
-      const ch = channel.trim() || "LIVE";
-      const data = await getClientVersion({ binaryType, channel: ch });
-      setVersionHash(data.version);
-      addLog(`[+] Latest version for ${binaryType}@${ch}: ${data.version}`);
-    } catch (err) {
-      addLog(`[!] Failed to fetch latest version: ${err}`);
-    } finally {
-      setIsFetchingVersion(false);
-    }
-  }
-
-  function copyPermLink() {
-    const ch = channel.trim() || "LIVE";
-    const hash = versionHash.trim();
-    const archDefault = getDefaultArch(binaryType);
-    let qs = `?channel=${encodeURIComponent(ch)}&binaryType=${encodeURIComponent(binaryType)}`;
-    if (arch !== archDefault) qs += `&arch=${encodeURIComponent(arch)}`;
-    if (hash) qs += `&version=${encodeURIComponent(hash)}`;
-    if (compressZip) qs += `&compressZip=true&compressionLevel=${compressionLevel}`;
-    navigator.clipboard.writeText(window.location.origin + qs);
-    addLog("[+] Permanent link copied to clipboard");
-  }
-
-  async function startDownload() {
-    const ch = channel.trim() || "LIVE";
-    let version = versionHash.trim().toLowerCase();
-    if (!version) {
-      addLog("[!] No version hash provided. Use 'Get Latest' to fetch the current version first.");
-      return;
-    }
-    if (!version.startsWith("version-")) version = "version-" + version;
-
-    const blobDir = getBinaryTypeInfo(binaryType).blobDirs[arch];
-    const channelPath = buildChannelPath(ch);
-    const versionPath = `${channelPath}${blobDir}${version}-`;
-    const outputFileName = `${ch}-${binaryType}-${version}.zip`;
-
-    setIsDownloading(true);
-    setLogs([]);
-
-    try {
-      if (isMac(binaryType)) {
-        const zipFileName =
-          binaryType === "MacPlayer" ? "RobloxPlayer.zip" : "RobloxStudioApp.zip";
-        addLog(`[+] Fetching Mac archive: ${zipFileName}`);
-        addLog(`[+] Downloading ${outputFileName}...`);
-        const zipData = await fetchBinary(versionPath + zipFileName);
-        triggerDownload(outputFileName, zipData);
-        addLog(`[+] Done! ${outputFileName} downloaded.`);
-      } else {
-        await downloadWindowsBuild(versionPath, binaryType, outputFileName, ch, addLog, compressZip, compressionLevel);
-      }
-    } catch (err) {
-      addLog(`[!] Error: ${err}`);
-    } finally {
-      setIsDownloading(false);
-    }
-  }
-
-  const archOptions = getArchOptions(binaryType);
-
-  return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
-      <div className="max-w-3xl mx-auto px-4 py-12 md:py-20 flex flex-col gap-10">
-
-        {/* Header */}
-        <header className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-primary/10 rounded-xl border border-primary/20 flex items-center justify-center text-primary">
-              <Download className="h-5 w-5" />
-            </div>
-            <h1 className="text-3xl font-mono font-bold tracking-tight">RDD</h1>
-          </div>
-          <p className="text-muted-foreground max-w-xl leading-relaxed">
-            Roblox Deployment Downloader. Assembles Roblox client and studio builds directly from Roblox's CDN — no server needed.
-          </p>
-          <p className="text-xs text-muted-foreground/60 font-mono">
-            Based on{" "}
-            <a href="https://github.com/latte-soft/rdd" target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary underline underline-offset-2">
-              latte-soft/rdd
-            </a>
-            {" "}— MIT License
-          </p>
-        </header>
-
-        {/* Form */}
-        <div className="border border-border rounded-xl bg-card p-6 flex flex-col gap-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Binary Type */}
-            <div className="flex flex-col gap-2">
-              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Binary Type</Label>
-              <Select value={binaryType} onValueChange={(v) => handleBinaryTypeChange(v as BinaryTypeName)}>
-                <SelectTrigger className="font-mono bg-muted/20 border-border/60" data-testid="select-binary-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WindowsPlayer" className="font-mono">WindowsPlayer</SelectItem>
-                  <SelectItem value="WindowsStudio64" className="font-mono">WindowsStudio64</SelectItem>
-                  <SelectItem value="MacPlayer" className="font-mono">MacPlayer</SelectItem>
-                  <SelectItem value="MacStudio" className="font-mono">MacStudio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Arch */}
-            <div className="flex flex-col gap-2">
-              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Architecture</Label>
-              <Select value={arch} onValueChange={setArch}>
-                <SelectTrigger className="font-mono bg-muted/20 border-border/60" data-testid="select-arch">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {archOptions.map(a => (
-                    <SelectItem key={a} value={a} className="font-mono">{a}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Channel */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="channel" className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Channel</Label>
-              <Input
-                id="channel"
-                value={channel}
-                onChange={e => setChannel(e.target.value)}
-                placeholder="LIVE"
-                className="font-mono bg-muted/20 border-border/60"
-                data-testid="input-channel"
-              />
-            </div>
-
-            {/* Version Hash */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="version" className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Version Hash</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="version"
-                  value={versionHash}
-                  onChange={e => setVersionHash(e.target.value)}
-                  placeholder="version-xxxxxxxxxxxxxxxx"
-                  className="font-mono bg-muted/20 border-border/60 flex-1 min-w-0"
-                  data-testid="input-version"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={fetchLatestVersion}
-                  disabled={isFetchingVersion || isDownloading}
-                  title="Get latest version"
-                  className="shrink-0"
-                  data-testid="button-get-latest"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isFetchingVersion ? "animate-spin" : ""}`} />
-                </Button>
-              </div>
-              <p className="text-[11px] text-muted-foreground/60 font-mono">Click the refresh icon to auto-fill the latest version</p>
-            </div>
-          </div>
-
-          {/* Compression options (Windows only) */}
-          {!isMac(binaryType) && (
-            <div className="flex flex-col gap-3 border-t border-border/50 pt-4">
-              <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Output Options</p>
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="compress"
-                  checked={compressZip}
-                  onCheckedChange={v => setCompressZip(!!v)}
-                  data-testid="checkbox-compress"
-                />
-                <Label htmlFor="compress" className="text-sm cursor-pointer">Compress output zip</Label>
-              </div>
-              {compressZip && (
-                <div className="flex items-center gap-3 pl-7">
-                  <Label htmlFor="level" className="text-sm text-muted-foreground whitespace-nowrap">Level (1–9):</Label>
-                  <Input
-                    id="level"
-                    type="number"
-                    min={1}
-                    max={9}
-                    value={compressionLevel}
-                    onChange={e => setCompressionLevel(Number(e.target.value))}
-                    className="w-20 font-mono bg-muted/20 border-border/60"
-                    data-testid="input-compression-level"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-3 border-t border-border/50 pt-4">
-            <Button
-              onClick={startDownload}
-              disabled={isDownloading || isFetchingVersion}
-              className="font-mono gap-2"
-              data-testid="button-download"
-            >
-              <Download className="h-4 w-4" />
-              {isDownloading ? "Downloading..." : "Download"}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={copyPermLink}
-              disabled={isDownloading}
-              className="font-mono gap-2"
-              data-testid="button-copy-link"
-            >
-              <Link className="h-4 w-4" />
-              Copy Link
-            </Button>
-          </div>
-        </div>
-
-        {/* Log console */}
-        {logs.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground uppercase tracking-wider">
-              <Terminal className="h-3.5 w-3.5" />
-              Output
-            </div>
-            <pre
-              ref={logRef}
-              className="bg-black/40 border border-border/60 rounded-xl p-4 font-mono text-xs text-green-400 leading-relaxed max-h-80 overflow-y-auto whitespace-pre-wrap"
-              data-testid="log-output"
-            >
-              {logs.join("\n")}
-            </pre>
-          </div>
-        )}
-
-        {/* Info box */}
-        <div className="border border-border/40 rounded-xl bg-muted/10 p-5 flex flex-col gap-3 text-sm text-muted-foreground">
-          <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground/70">How it works</p>
-          <ul className="list-disc list-inside space-y-1.5 text-sm leading-relaxed">
-            <li>Select your binary type, architecture, and channel (default: LIVE)</li>
-            <li>Click the refresh icon next to Version Hash to auto-fill the latest version</li>
-            <li>Or paste any historical version hash manually</li>
-            <li>Hit Download — your browser fetches all packages directly from Roblox's CDN and assembles the zip locally</li>
-            <li>For Windows: produces an installable zip with all content extracted to the correct paths</li>
-            <li>For Mac: downloads the DMG/zip archive directly</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function triggerDownload(filename: string, data: ArrayBuffer) {
   const blob = new Blob([data], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
@@ -415,7 +139,7 @@ async function downloadWindowsBuild(
   compressZip: boolean,
   compressionLevel: number
 ) {
-  log(`[+] Fetching rbxPkgManifest for ${versionPath.split("/").pop()}@${channel}...`);
+  log(`[+] Fetching manifest for ${versionPath.split("/").pop()}@${channel}...`);
 
   let manifestResp = await fetch(versionPath + "rbxPkgManifest.txt");
   if (!manifestResp.ok) {
@@ -449,7 +173,7 @@ async function downloadWindowsBuild(
   }
 
   const packages = lines.filter(l => l.endsWith(".zip"));
-  log(`[+] Found ${packages.length} packages in manifest`);
+  log(`[+] Found ${packages.length} packages`);
 
   const zip = new JSZip();
   zip.file("AppSettings.xml", APP_SETTINGS_XML);
@@ -457,11 +181,10 @@ async function downloadWindowsBuild(
   let completed = 0;
   await Promise.all(
     packages.map(async (pkg) => {
-      log(`[+] Fetching "${pkg}"...`);
+      log(`[↓] ${pkg}`);
       const blobData = await fetchBinary(versionPath + pkg);
 
       if (!(pkg in extractRoots)) {
-        log(`[*] "${pkg}" not in extract roots, placing at root`);
         zip.file(pkg, blobData);
       } else {
         const extractRoot = extractRoots[pkg];
@@ -477,13 +200,13 @@ async function downloadWindowsBuild(
           );
         });
         await Promise.all(filePromises);
-        log(`[+] Extracted "${pkg}" (${++completed}/${packages.length})`);
+        log(`[✓] ${pkg} (${++completed}/${packages.length})`);
       }
     })
   );
 
   log(`[+] Assembling ${outputFileName}...`);
-  if (compressZip) log(`[!] Compressing (level ${compressionLevel}/9), this may take a while...`);
+  if (compressZip) log(`[!] Compressing at level ${compressionLevel}/9...`);
 
   const outputData = await zip.generateAsync({
     type: "arraybuffer",
@@ -492,5 +215,396 @@ async function downloadWindowsBuild(
   });
 
   triggerDownload(outputFileName, outputData);
-  log(`[+] Done! ${outputFileName} downloaded.`);
+  log(`[✓] Done — ${outputFileName}`);
+}
+
+export default function Home() {
+  const [binaryType, setBinaryType] = useState<BinaryTypeName>("WindowsPlayer");
+  const [arch, setArch] = useState<string>("x86-64");
+  const [channel, setChannel] = useState("LIVE");
+  const [versionHash, setVersionHash] = useState("");
+  const [compressZip, setCompressZip] = useState(false);
+  const [compressionLevel, setCompressionLevel] = useState(5);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isFetchingVersion, setIsFetchingVersion] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
+  const logRef = useRef<HTMLPreElement>(null);
+
+  const addLog = useCallback((msg: string) => {
+    setLogs(prev => [...prev, msg]);
+    setTimeout(() => {
+      logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
+    }, 0);
+  }, []);
+
+  function handleBinaryTypeChange(val: BinaryTypeName) {
+    setBinaryType(val);
+    setArch(getDefaultArch(val));
+  }
+
+  async function fetchLatestVersion() {
+    setIsFetchingVersion(true);
+    try {
+      const ch = channel.trim() || "LIVE";
+      const data = await getClientVersion({ binaryType, channel: ch });
+      setVersionHash(data.version);
+      addLog(`[+] ${binaryType} @ ${ch} → ${data.version}`);
+    } catch (err) {
+      addLog(`[!] Failed to fetch version: ${err}`);
+    } finally {
+      setIsFetchingVersion(false);
+    }
+  }
+
+  function copyPermLink() {
+    const ch = channel.trim() || "LIVE";
+    const hash = versionHash.trim();
+    const archDefault = getDefaultArch(binaryType);
+    let qs = `?channel=${encodeURIComponent(ch)}&binaryType=${encodeURIComponent(binaryType)}`;
+    if (arch !== archDefault) qs += `&arch=${encodeURIComponent(arch)}`;
+    if (hash) qs += `&version=${encodeURIComponent(hash)}`;
+    if (compressZip) qs += `&compressZip=true&compressionLevel=${compressionLevel}`;
+    navigator.clipboard.writeText(window.location.origin + qs);
+    addLog("[+] Link copied to clipboard");
+  }
+
+  async function startDownload() {
+    const ch = channel.trim() || "LIVE";
+    let version = versionHash.trim().toLowerCase();
+    if (!version) {
+      addLog("[!] Enter a version hash or use the refresh button to fetch the latest.");
+      return;
+    }
+    if (!version.startsWith("version-")) version = "version-" + version;
+
+    const blobDir = getBinaryTypeInfo(binaryType).blobDirs[arch];
+    const channelPath = buildChannelPath(ch);
+    const versionPath = `${channelPath}${blobDir}${version}-`;
+    const outputFileName = `${ch}-${binaryType}-${version}.zip`;
+
+    setIsDownloading(true);
+    setLogs([]);
+
+    try {
+      if (isMac(binaryType)) {
+        const zipFileName = binaryType === "MacPlayer" ? "RobloxPlayer.zip" : "RobloxStudioApp.zip";
+        addLog(`[+] Fetching ${zipFileName}...`);
+        const zipData = await fetchBinary(versionPath + zipFileName);
+        triggerDownload(outputFileName, zipData);
+        addLog(`[✓] Done — ${outputFileName}`);
+      } else {
+        await downloadWindowsBuild(versionPath, binaryType, outputFileName, ch, addLog, compressZip, compressionLevel);
+      }
+    } catch (err) {
+      addLog(`[!] Error: ${err}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
+  const archOptions = getArchOptions(binaryType);
+  const busy = isDownloading || isFetchingVersion;
+
+  return (
+    <div
+      className="min-h-[100dvh] text-white flex flex-col"
+      style={{
+        background: "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56,189,248,0.08) 0%, transparent 70%), #06060a",
+      }}
+    >
+      {/* Top bar */}
+      <div
+        className="flex items-center justify-between px-6 py-4 border-b"
+        style={{ borderColor: "rgba(56,189,248,0.12)" }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="h-7 w-7 rounded flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg,#0ea5e9,#6366f1)" }}
+          >
+            <Download className="h-3.5 w-3.5 text-white" />
+          </div>
+          <span className="font-bold tracking-widest text-sm uppercase text-white/90">Zenon Executor</span>
+        </div>
+        <span
+          className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border"
+          style={{ color: "#0ea5e9", borderColor: "rgba(14,165,233,0.3)", background: "rgba(14,165,233,0.06)" }}
+        >
+          Roblox Downgrader
+        </span>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-2xl flex flex-col gap-6">
+
+          {/* Hero */}
+          <div className="text-center flex flex-col items-center gap-3 mb-2">
+            <h1
+              className="text-5xl font-black tracking-tight"
+              style={{
+                background: "linear-gradient(135deg, #fff 30%, #7dd3fc 70%, #818cf8 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              ZENON
+            </h1>
+            <p className="text-sm text-white/40 tracking-widest uppercase font-medium">
+              Roblox Deployment Downgrader
+            </p>
+          </div>
+
+          {/* Card */}
+          <div
+            className="rounded-2xl p-6 flex flex-col gap-5"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(56,189,248,0.15)",
+              boxShadow: "0 0 40px rgba(14,165,233,0.04), inset 0 1px 0 rgba(255,255,255,0.05)",
+            }}
+          >
+            {/* Row 1: Binary Type + Arch */}
+            <div className="grid grid-cols-2 gap-4">
+              <FieldGroup label="Binary Type">
+                <Select value={binaryType} onValueChange={(v) => handleBinaryTypeChange(v as BinaryTypeName)}>
+                  <SelectTrigger className="zenon-input font-mono text-sm" data-testid="select-binary-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="font-mono">
+                    <SelectItem value="WindowsPlayer">WindowsPlayer</SelectItem>
+                    <SelectItem value="WindowsStudio64">WindowsStudio64</SelectItem>
+                    <SelectItem value="MacPlayer">MacPlayer</SelectItem>
+                    <SelectItem value="MacStudio">MacStudio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FieldGroup>
+
+              <FieldGroup label="Architecture">
+                <Select value={arch} onValueChange={setArch} disabled={archOptions.length <= 1}>
+                  <SelectTrigger className="zenon-input font-mono text-sm" data-testid="select-arch">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="font-mono">
+                    {archOptions.map(a => (
+                      <SelectItem key={a} value={a}>{a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FieldGroup>
+            </div>
+
+            {/* Row 2: Channel + Version */}
+            <div className="grid grid-cols-2 gap-4">
+              <FieldGroup label="Channel">
+                <Input
+                  value={channel}
+                  onChange={e => setChannel(e.target.value)}
+                  placeholder="LIVE"
+                  className="zenon-input font-mono text-sm"
+                  data-testid="input-channel"
+                />
+              </FieldGroup>
+
+              <FieldGroup label="Version Hash">
+                <div className="flex gap-2">
+                  <Input
+                    value={versionHash}
+                    onChange={e => setVersionHash(e.target.value)}
+                    placeholder="version-xxxxxxxxxxxxxxxx"
+                    className="zenon-input font-mono text-sm flex-1 min-w-0"
+                    data-testid="input-version"
+                  />
+                  <button
+                    onClick={fetchLatestVersion}
+                    disabled={busy}
+                    title="Fetch latest version"
+                    data-testid="button-get-latest"
+                    className="shrink-0 h-9 w-9 rounded-lg flex items-center justify-center transition-all disabled:opacity-40"
+                    style={{
+                      background: "rgba(14,165,233,0.1)",
+                      border: "1px solid rgba(14,165,233,0.25)",
+                      color: "#38bdf8",
+                    }}
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isFetchingVersion ? "animate-spin" : ""}`} />
+                  </button>
+                </div>
+              </FieldGroup>
+            </div>
+
+            {/* Compression (Windows only) */}
+            {!isMac(binaryType) && (
+              <div
+                className="rounded-xl px-4 py-3 flex flex-col gap-3"
+                style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="compress"
+                    checked={compressZip}
+                    onCheckedChange={v => setCompressZip(!!v)}
+                    data-testid="checkbox-compress"
+                    className="border-white/20 data-[state=checked]:bg-sky-500 data-[state=checked]:border-sky-500"
+                  />
+                  <label htmlFor="compress" className="text-sm text-white/70 cursor-pointer select-none">
+                    Compress output zip
+                  </label>
+                  {compressZip && (
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="text-xs text-white/40">Level</span>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={9}
+                        value={compressionLevel}
+                        onChange={e => setCompressionLevel(Number(e.target.value))}
+                        className="zenon-input w-16 font-mono text-sm text-center"
+                        data-testid="input-compression-level"
+                      />
+                      <span className="text-xs text-white/40">/9</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={startDownload}
+                disabled={busy}
+                data-testid="button-download"
+                className="flex-1 h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: busy
+                    ? "rgba(14,165,233,0.3)"
+                    : "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
+                  boxShadow: busy ? "none" : "0 0 24px rgba(14,165,233,0.3)",
+                  color: "#fff",
+                }}
+              >
+                {isDownloading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Download Build
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={copyPermLink}
+                disabled={busy}
+                data-testid="button-copy-link"
+                className="h-11 px-5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all disabled:opacity-40"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "rgba(255,255,255,0.6)",
+                }}
+              >
+                <Link2 className="h-4 w-4" />
+                Copy Link
+              </button>
+            </div>
+          </div>
+
+          {/* Log console */}
+          {logs.length > 0 && (
+            <div
+              className="rounded-xl overflow-hidden"
+              style={{ border: "1px solid rgba(56,189,248,0.12)" }}
+            >
+              <div
+                className="flex items-center gap-2 px-4 py-2 border-b"
+                style={{
+                  background: "rgba(14,165,233,0.05)",
+                  borderColor: "rgba(56,189,248,0.12)",
+                }}
+              >
+                <div className="flex gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/60" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-500/60" />
+                </div>
+                <span className="text-xs font-mono text-white/30 ml-2 tracking-widest uppercase">Output</span>
+              </div>
+              <pre
+                ref={logRef}
+                className="p-4 font-mono text-xs leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
+                style={{
+                  background: "rgba(0,0,0,0.5)",
+                  color: "#4ade80",
+                }}
+                data-testid="log-output"
+              >
+                {logs.map((line, i) => {
+                  const isError = line.startsWith("[!");
+                  const isInfo = line.startsWith("[*");
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        color: isError ? "#f87171" : isInfo ? "#facc15" : "#4ade80",
+                        display: "block",
+                      }}
+                    >
+                      <span style={{ color: "#38bdf8", opacity: 0.5 }}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      {"  "}
+                      {line}
+                    </span>
+                  );
+                })}
+              </pre>
+            </div>
+          )}
+
+          {/* Footer hint */}
+          <p className="text-center text-xs text-white/20 flex items-center justify-center gap-1.5">
+            <ChevronRight className="h-3 w-3" />
+            Fetches packages directly from Roblox CDN and assembles the build in your browser
+          </p>
+        </div>
+      </div>
+
+      <style>{`
+        .zenon-input {
+          background: rgba(255,255,255,0.04) !important;
+          border: 1px solid rgba(255,255,255,0.1) !important;
+          color: rgba(255,255,255,0.85) !important;
+          height: 36px !important;
+        }
+        .zenon-input::placeholder {
+          color: rgba(255,255,255,0.2) !important;
+        }
+        .zenon-input:focus {
+          border-color: rgba(14,165,233,0.5) !important;
+          box-shadow: 0 0 0 2px rgba(14,165,233,0.1) !important;
+          outline: none !important;
+        }
+        .zenon-input:disabled {
+          opacity: 0.4 !important;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
 }
