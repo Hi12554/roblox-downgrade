@@ -5,26 +5,6 @@
  * Roblox Deployment Downloader API
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export interface ClientVersionResponse {
-  /** Version hash (e.g. version-abc123def456) */
-  version: string;
-  clientVersionUpload: string;
-  /** @nullable */
-  bootstrapperVersion?: string | null;
-}
-
-export interface ErrorResponse {
-  error: string;
-}
-
-export type GetClientVersionParams = {
-  binaryType: GetClientVersionBinaryType;
-  channel?: string;
-};
 
 export type GetClientVersionBinaryType =
   (typeof GetClientVersionBinaryType)[keyof typeof GetClientVersionBinaryType];
