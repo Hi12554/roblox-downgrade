@@ -324,14 +324,8 @@ export default function Home() {
           >
             <Download className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="font-bold tracking-widest text-sm uppercase text-white/90">Zenon Executor</span>
+          <span className="font-bold tracking-widest text-sm uppercase text-white/90">Roblox Downgrader</span>
         </div>
-        <span
-          className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border"
-          style={{ color: "#0ea5e9", borderColor: "rgba(14,165,233,0.3)", background: "rgba(14,165,233,0.06)" }}
-        >
-          Roblox Downgrader
-        </span>
       </div>
 
       {/* Main content */}
@@ -349,10 +343,10 @@ export default function Home() {
                 backgroundClip: "text",
               }}
             >
-              ZENON
+              RBX Downgrader
             </h1>
             <p className="text-sm text-white/40 tracking-widest uppercase font-medium">
-              Roblox Deployment Downgrader
+              Download any Roblox build directly from CDN
             </p>
           </div>
 
